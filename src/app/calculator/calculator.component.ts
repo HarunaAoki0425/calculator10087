@@ -20,6 +20,15 @@ export class CalculatorComponent {
         if (this.resultDisplayed && !this.isOperator(value)) {
             this.display = '';
         }
+        
+         
+         const parts = this.display.split(/[\+\-\*\/]/);
+         const lastNumber = parts[parts.length - 1] || '';
+
+        // 10億の桁までしか入力できない
+        if (!this.isOperator(value) && lastNumber.replace(/\D/g, '').length >= 10) {
+        return;
+        }
 
         // 小数点
         if (value === '.') {
