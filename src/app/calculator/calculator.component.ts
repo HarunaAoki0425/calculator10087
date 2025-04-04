@@ -10,41 +10,49 @@ import { FormsModule } from '@angular/forms';
     imports: [CommonModule, FormsModule] 
 })
 export class CalculatorComponent {
-    display: string = '';
-    operatorSet: boolean = false;
+    displayText: string = ''; // 表示用
+    lastInputIsOperator: boolean = false; // 直前の入力が演算子かどうか
 
-    appendToDisplay(value: string): void {
-        if (this.isOperator(value) && this.operatorSet) {
-            return; // 連続した演算子の入力を防ぐ
+    // 入力を追加する
+    addInput(value: string): void {
+        if (this.isOperator(value) && this.lastInputIsOperator) {
+            return; // 連続して演算子が入力されるのを防ぐ
         }
-        this.display += value;
-        this.operatorSet = this.isOperator(value);
+        
+        this.displayText += value;
+        this.lastInputIsOperator = this.isOperator(value);
     }
 
+    // 表示をクリアする
     clearDisplay(): void {
-        this.display = '';
-        this.operatorSet = false;
+        this.displayText = '';
+        this.lastInputIsOperator = false;
     }
 
+    // 計算を実行
     calculateResult(): void {
         try {
-            let result = new Function('return ' + this.display)();
+            let result = new Function('return ' + this.displayText)();
             if (result > 9999999999) {
-                this.display = 'Error';
+                this.displayText = 'Error';
             } else {
-                this.display = parseFloat(result.toFixed(8)).toString();
+                this.displayText = parseFloat(result.toFixed(8)).toString();
             }
         } catch {
-            this.display = 'Error';
+            this.displayText = 'Error';
         }
     }
+  
 
+    // 直前の入力を削除
     deleteLast(): void {
-        this.display = this.display.slice(0, -1);
-        this.operatorSet = this.isOperator(this.display.slice(-1));
+        this.displayText = this.displayText.slice(0, -1);
+        this.lastInputIsOperator = this.isOperator(this.displayText.slice(-1));
     }
 
+    // 演算子かどうかを判定
     private isOperator(value: string): boolean {
         return ['+', '-', '*', '/'].includes(value);
     }
 }
+

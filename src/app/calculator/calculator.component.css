@@ -3,15 +3,15 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #f4f4f4;
+    background-color: whitesmoke;
 }
 .calculator {
     width: 300px; 
     margin: 50px auto;
-    background: #fff;
+    background: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid lightgray;
     text-align: center;
     flex-direction: column;
     align-items: center;
@@ -31,7 +31,7 @@ body {
     text-align: right;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid lightgray;
     border-radius: 5px;
 }
 .buttons {
@@ -45,14 +45,14 @@ button {
     font-size: 20px;
     border: none;
     border-radius: 5px;
-    background: #e0e0e0;
+    background: lightgray;
     cursor: pointer;
 }
 button.operator {
-    background: #ff8c00;
+    background: orange;
     color: white;
 }
 button.clear {
-    background: #ff4c4c;
+    background: orange;
     color: white;
 }
