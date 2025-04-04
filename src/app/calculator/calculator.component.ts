@@ -11,22 +11,30 @@ import { FormsModule } from '@angular/forms';
 })
 export class CalculatorComponent {
     display: string = ''; // 表示
-    prevIsOperator: boolean = false; // 直前の入力が演算子かどうか
+    prevIsOperator: boolean = false; // 直前が演算子かどうか
+    resultDisplayed: boolean = false; // 計算結果が表示されたかどうか
+
 
     // ボタンを押したときの処理
     press(value: string): void {
+        if (this.resultDisplayed && !this.isOperator(value)) {
+            // 計算結果が表示されていて、新たに数字が入力されたらクリア
+            this.display = '';
+        }
         if (this.isOperator(value) && this.prevIsOperator) {
             return; // 連続して演算子が入力されるのを防ぐ
         }
 
         this.display += value;
         this.prevIsOperator = this.isOperator(value);
+        this.resultDisplayed = false; 
     }
 
     // 表示をクリア
     clear(): void {
       this.display = '';
-      this.prevIsOperator = false;
+      this.prevIsOperator = false
+      this.resultDisplayed = false;
   }
   
 
@@ -42,6 +50,7 @@ export class CalculatorComponent {
         } catch {
             this.display = 'Error';
         }
+        this.resultDisplayed = true;
     }
 
     // 直前の入力を削除
