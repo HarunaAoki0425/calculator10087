@@ -18,14 +18,29 @@ export class CalculatorComponent {
     // ボタンを押したときの処理
     press(value: string): void {
         if (this.resultDisplayed && !this.isOperator(value)) {
-            // 計算結果が表示されていて、新たに数字が入力されたらクリア
             this.display = '';
         }
-        if (this.isOperator(value) && this.prevIsOperator) {
-            return; // 連続して演算子が入力されるのを防ぐ
+
+        // 小数点
+        if (value === '.') {
+            if (this.prevIsOperator || this.display === '') {
+                this.display += '0.';
+            }
+            else {
+                const parts = this.display.split(/[\+\-\*\/]/);
+                if (parts[parts.length - 1].includes('.')) {
+                    return;
+                }
+                this.display += value;
+            }
+        } 
+        else {
+            if (this.isOperator(value) && this.prevIsOperator) {
+                return;
+            }
+            this.display += value;
         }
 
-        this.display += value;
         this.prevIsOperator = this.isOperator(value);
         this.resultDisplayed = false; 
     }
