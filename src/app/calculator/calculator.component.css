@@ -1,0 +1,30 @@
+.calculator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 200px;
+  }
+  
+  .display {
+    margin-bottom: 20px;
+  }
+  
+  input {
+    width: 100%;
+    font-size: 2em;
+    text-align: right;
+    padding: 10px;
+  }
+  
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+  
+  button {
+    font-size: 1.5em;
+    padding: 20px;
+  }
+  

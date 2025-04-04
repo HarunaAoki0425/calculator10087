@@ -1,0 +1,11 @@
+<div class="calculator">
+    <div class="display">
+      <input type="text" [value]="displayValue" disabled />
+    </div>
+    <div class="buttons">
+      <button *ngFor="let button of buttons" (click)="onButtonClick(button)">
+        {{ button }}
+      </button>
+    </div>
+  </div>
+  
