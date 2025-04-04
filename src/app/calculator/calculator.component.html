@@ -1,23 +1,24 @@
 <div class="calculator">
-    <input type="text" id="display" [(ngModel)]="displayText" disabled>
+    <input type="text" id="display" [(ngModel)]="display" disabled>
     <div class="buttons">
         
-        <button (click)="addInput('7')">7</button>
-        <button (click)="addInput('8')">8</button>
-        <button (click)="addInput('9')">9</button>
-        <button class="operator" (click)="addInput('/')">÷</button>
-        <button (click)="addInput('4')">4</button>
-        <button (click)="addInput('5')">5</button>
-        <button (click)="addInput('6')">6</button>
-        <button class="operator" (click)="addInput('*')">×</button>
-        <button (click)="addInput('3')">3</button>
-        <button (click)="addInput('2')">2</button>
-        <button (click)="addInput('1')">1</button>
-        <button class="operator" (click)="addInput('-')">-</button>
-        <button class="clear" (click)="clearDisplay()">C</button>
-        <button (click)="addInput('0')">0</button>
-        <button class="equal" (click)="calculateResult()">=</button>
-        <button class="operator" (click)="addInput('+')">+</button>
+        <button (click)="press('7')">7</button>
+        <button (click)="press('8')">8</button>
+        <button (click)="press('9')">9</button>
+        <button class="operator" (click)="press('/')">÷</button>
+        <button (click)="press('4')">4</button>
+        <button (click)="press('5')">5</button>
+        <button (click)="press('6')">6</button>
+        <button class="operator" (click)="press('*')">×</button>
+        <button (click)="press('3')">3</button>
+        <button (click)="press('2')">2</button>
+        <button (click)="press('1')">1</button>
+        <button class="operator" (click)="press('-')">-</button>
+        <button class="clear" (click)="clear()">C</button>
+        <button (click)="press('0')">0</button>
+        <button class="equal" (click)="evaluate()">=</button>
+        <button class="operator" (click)="press('+')">+</button>
 
     </div>
 </div>
+

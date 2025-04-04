@@ -3,24 +3,23 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: whitesmoke;
+    background-color: white;
 }
+
 .calculator {
     width: 300px; 
-    margin: 50px auto;
+    margin: 0 auto;
     background: white;
     padding: 20px;
     border-radius: 10px;
     border: 1px solid lightgray;
     text-align: center;
     flex-direction: column;
-    align-items: center;
 }
 
 .display-container {
     width: 100%;
     display: flex;
-    justify-content: center; 
     margin-bottom: 20px; 
 }
 
@@ -39,6 +38,7 @@ body {
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 }
+
 button {
     width: 100%;
     height: 50px;
@@ -47,12 +47,27 @@ button {
     border-radius: 5px;
     background: lightgray;
     cursor: pointer;
+    transition: background 0.2s ease-in-out;
 }
+
+button:hover {
+    background: gray; 
+}
+
 button.operator {
     background: orange;
     color: white;
 }
+
+button.operator:hover {
+    background: darkorange;
+}
+
 button.clear {
-    background: orange;
+    background: red;
     color: white;
+}
+
+button.clear:hover {
+    background: darkred;
 }
