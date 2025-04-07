@@ -69,7 +69,7 @@ export class CalculatorComponent {
 
   evaluate(): void {
     try {
-      const result = eval(this.display);  // 数式の評価
+      const result = this.calculate(this.display); // 数式の評価
 
       // 計算結果が10000000000以上の場合にエラー表示
       if (result >= 10000000000) {
@@ -83,6 +83,79 @@ export class CalculatorComponent {
     this.resultDisplayed = true;
   }
 
+  // 数式を計算する関数
+  private calculate(expression: string): number {
+    const tokens = this.tokenize(expression);
+    const values: number[] = [];
+    const operators: string[] = [];
+
+    let i = 0;
+
+    while (i < tokens.length) {
+      const token = tokens[i];
+
+      if (this.isNumber(token)) {
+        values.push(parseFloat(token));
+      } else if (this.isOperator(token)) {
+        while (
+          operators.length &&
+          this.hasPrecedence(token, operators[operators.length - 1])
+        ) {
+          values.push(this.applyOperator(values.pop()!, values.pop()!, operators.pop()!));
+        }
+        operators.push(token);
+      }
+      i++;
+    }
+
+    while (operators.length) {
+      values.push(this.applyOperator(values.pop()!, values.pop()!, operators.pop()!));
+    }
+
+    return values.pop()!;
+  }
+
+  // 数式をトークンに分割する関数
+  private tokenize(expression: string): string[] {
+    const regex = /\d+(\.\d*)?|\+|\-|\*|\//g;
+    return expression.match(regex) || [];
+  }
+
+  // 数字かどうかを判定
+  private isNumber(value: string): boolean {
+    return !isNaN(parseFloat(value));
+  }
+
+  // 演算子かどうかを判定
+  private isOperator(value: string): boolean {
+    return ['+', '-', '*', '/'].includes(value);
+  }
+
+  // 演算子の優先順位をチェック
+  private hasPrecedence(op1: string, op2: string): boolean {
+    if ((op1 === '*' || op1 === '/') && (op2 === '+' || op2 === '-')) {
+      return false; // '*' と '/' は '+' と '-' より優先される
+    }
+    return true;  // それ以外の組み合わせでは、優先度を考慮しない
+  }
+
+  // 演算を適用
+  private applyOperator(a: number, b: number, op: string): number {
+    switch (op) {
+      case '+':
+        return a + b;
+      case '-':
+        return a - b;
+      case '*':
+        return a * b;
+      case '/':
+        if (b === 0) throw new Error("Cannot divide by zero");
+        return a / b;
+      default:
+        throw new Error("Unknown operator");
+    }
+  }
+
   private formatResult(value: number): string {
     let resultStr = value.toFixed(8); // 小数点以下第9位で切り捨て
     return resultStr.replace(/\.?0+$/, ''); // 不要なゼロを削除
@@ -91,10 +164,6 @@ export class CalculatorComponent {
   deleteLast(): void {
     this.display = this.display.slice(0, -1);
     this.prevIsOperator = this.isOperator(this.display.slice(-1));
-  }
-
-  private isOperator(value: string): boolean {
-    return ['+', '-', '*', '/'].includes(value);
   }
 
   clear(): void {

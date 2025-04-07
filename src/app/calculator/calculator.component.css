@@ -85,7 +85,7 @@ button.spacer {
 
 button.equal {
     grid-column: span 2; 
-    background-color: lightgreen;/* ＝ボタンは2列に跨る */
+    background-color: lightgreen;
 }
 
 button.equal:hover {
