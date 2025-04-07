@@ -1,90 +1,119 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; 
+import { FormsModule } from '@angular/forms';
 
 @Component({
-    selector: 'app-calculator',
-    standalone: true,
-    templateUrl: './calculator.component.html',
-    styleUrls: ['./calculator.component.css'],
-    imports: [CommonModule, FormsModule] 
+  selector: 'app-calculator',
+  standalone: true,
+  imports: [FormsModule], 
+  templateUrl: './calculator.component.html',
+  styleUrls: ['./calculator.component.css']
 })
 export class CalculatorComponent {
-    display: string = ''; // 表示
-    prevIsOperator: boolean = false; // 直前が演算子かどうか
-    resultDisplayed: boolean = false; // 計算結果が表示されたかどうか
+  display: string = '';
+  prevIsOperator: boolean = false;
+  resultDisplayed: boolean = false;
 
-
-    // ボタンを押したときの処理
-    press(value: string): void {
-        if (this.resultDisplayed && !this.isOperator(value)) {
-            this.display = '';
-        }
-        
-         
-         const parts = this.display.split(/[\+\-\*\/]/);
-         const lastNumber = parts[parts.length - 1] || '';
-
-        // 10億の桁までしか入力できない
-        if (!this.isOperator(value) && lastNumber.replace(/\D/g, '').length >= 10) {
-        return;
-        }
-
-        // 小数点
-        if (value === '.') {
-            if (this.prevIsOperator || this.display === '') {
-                this.display += '0.';
-            }
-            else {
-                const parts = this.display.split(/[\+\-\*\/]/);
-                if (parts[parts.length - 1].includes('.')) {
-                    return;
-                }
-                this.display += value;
-            }
-        } 
-        else {
-            if (this.isOperator(value) && this.prevIsOperator) {
-                return;
-            }
-            this.display += value;
-        }
-
-        this.prevIsOperator = this.isOperator(value);
-        this.resultDisplayed = false; 
-    }
-
-    // 表示をクリア
-    clear(): void {
+  press(value: string): void {
+    if (this.resultDisplayed) {
       this.display = '';
-      this.prevIsOperator = false
       this.resultDisplayed = false;
+    }
+  
+    if (this.isOperator(value)) {
+      if (this.prevIsOperator || this.display === '') {
+        return;
+      }
+      this.prevIsOperator = true;
+    } else {
+      this.prevIsOperator = false;
+  
+      // 入力制限のチェック（数字か小数点の場合）
+      if (!this.canAddValue(value)) {
+        return;
+      }
+    }
+  
+    this.display += value;
+
+    const displayElement = document.getElementById('display');
+    if (displayElement) {
+        displayElement.scrollLeft = displayElement.scrollWidth;
+    }
   }
   
+  private canAddValue(value: string): boolean {
+    const next = this.display + value;
+  
+    // 数式の最後の数値部分だけ抽出
+    const lastNumberMatch = next.match(/(\d+(\.\d*)?)$/);
+    if (!lastNumberMatch) return true; // 数字がないなら制限かけない
+  
+    const number = lastNumberMatch[0];
+  
+    // 整数・小数に分ける
+    const [integerPart, decimalPart] = number.split('.');
+    if (integerPart.length > 10) return false;
+    if (decimalPart && decimalPart.length > 8) return false;
+  
+    // 入力が浮動小数点として許容範囲か？
+    try {
+      const valueAsNum = parseFloat(next);
+      if (valueAsNum > 9999999999.99999999) return false;
+    } catch {
+      return false;
+    }
+  
+    return true;
+  }
 
-    // 計算
-    evaluate(): void {
-        try {
-            const result = new Function('return ' + this.display)();
-            if (result > 9999999999) {
-                this.display = 'Error';
-            } else {
-                this.display = parseFloat(result.toFixed(8)).toString();
-            }
-        } catch {
-            this.display = 'Error';
+  clear(): void {
+    this.display = '';
+    this.prevIsOperator = false;
+    this.resultDisplayed = false;
+  }
+
+  evaluate(): void {
+    try {
+      // 計算を行う
+      const result = eval(this.display);  // 数式の評価を行う
+  
+      // 結果が制限を超えている場合はエラーにする
+      if (result > 9999999999.99999999) {
+        this.display = 'Error';
+      } else {
+        // 小数点以下第9位を切り捨てて表示（toFixed(8)で小数点以下8桁にする）
+        let resultStr = this.toFixedPrecision(result, 8);
+        
+        // 小数点以下があればゼロを省略
+        if (resultStr.indexOf('.') !== -1) {
+          // 小数点以下があった場合、末尾の不要なゼロを削除
+          resultStr = resultStr.replace(/\.?0+$/, '');
         }
-        this.resultDisplayed = true;
+        
+        this.display = resultStr;
+      }
+    } catch {
+      this.display = 'Error';
     }
+    this.resultDisplayed = true;
+  }
+  
+  
 
-    // 直前の入力を削除
-    deleteLast(): void {
-        this.display = this.display.slice(0, -1);
-        this.prevIsOperator = this.isOperator(this.display.slice(-1));
-    }
+  deleteLast(): void {
+    this.display = this.display.slice(0, -1);
+    this.prevIsOperator = this.isOperator(this.display.slice(-1));
+  }
 
-     // + - * / の判定
-    private isOperator(value: string): boolean {
-        return ['+', '-', '*', '/'].includes(value);
-    }
+  private isOperator(value: string): boolean {
+    return ['+', '-', '*', '/'].includes(value);
+  }
+
+  // 精度を保持して数値を切り捨てる関数
+  private toFixedPrecision(value: number, decimals: number): string {
+    if (isNaN(value)) return 'Error';
+    const factor = Math.pow(10, decimals);
+    const result = Math.floor(value * factor) / factor;
+    return result.toFixed(decimals);  // 指定桁数で結果を返す
+  }
 }
