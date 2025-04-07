@@ -9,9 +9,9 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./calculator.component.css']
 })
 export class CalculatorComponent {
-  display: string = ''; // 入力されている数式
-  prevIsOperator: boolean = false; // 直前が演算子かどうか
-  resultDisplayed: boolean = false; // 結果が表示されているかどうか
+  display: string = ''; 
+  prevIsOperator: boolean = false; 
+  resultDisplayed: boolean = false; 
 
   press(value: string): void {
     if (this.resultDisplayed) {
@@ -36,9 +36,9 @@ export class CalculatorComponent {
       }
       this.display += value;
     }
-
-    this.scrollToEnd();
-  }
+  
+    this.scrollToEnd();  // 文字が追加された後、スクロール位置を調整
+  }  
 
   private canAddValue(value: string): boolean {
     const next = this.display + value;
