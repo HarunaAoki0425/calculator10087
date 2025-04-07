@@ -14,33 +14,26 @@ export class CalculatorComponent {
   resultDisplayed: boolean = false; // 結果が表示されているかどうか
 
   press(value: string): void {
-    // 結果が表示されているときに、新しい入力があった場合は結果をクリア
     if (this.resultDisplayed) {
-      // すでに結果が表示されている場合、次に入力する値を結果として設定する
       if (this.isOperator(value)) {
-        // 演算子が入力された場合は結果に続けて計算できるようにする
         this.display = this.display + value;
         this.resultDisplayed = false;
       } else {
-        // 数字が入力された場合、新しい計算として扱う
         this.display = value;
         this.resultDisplayed = false;
       }
     } else {
-      // 演算子が連続して入力されないようにする
       if (this.isOperator(value)) {
         if (this.prevIsOperator || this.display === '') {
-          return; // 連続した演算子の入力を防止
+          return;
         }
         this.prevIsOperator = true;
       } else {
         this.prevIsOperator = false;
         if (!this.canAddValue(value)) {
-          return; // 無効な値が入力された場合は無視
+          return;
         }
       }
-
-      // 入力された値を表示に追加
       this.display += value;
     }
 
@@ -69,9 +62,8 @@ export class CalculatorComponent {
 
   evaluate(): void {
     try {
-      const result = this.calculate(this.display); // 数式の評価
+      const result = this.calculate(this.display);
 
-      // 計算結果が10000000000以上の場合にエラー表示
       if (result >= 10000000000) {
         this.display = 'Error';
       } else {
@@ -83,7 +75,6 @@ export class CalculatorComponent {
     this.resultDisplayed = true;
   }
 
-  // 数式を計算する関数
   private calculate(expression: string): number {
     const tokens = this.tokenize(expression);
     const values: number[] = [];
@@ -101,7 +92,10 @@ export class CalculatorComponent {
           operators.length &&
           this.hasPrecedence(token, operators[operators.length - 1])
         ) {
-          values.push(this.applyOperator(values.pop()!, values.pop()!, operators.pop()!));
+          const b = values.pop()!;
+          const a = values.pop()!;
+          const op = operators.pop()!;
+          values.push(this.applyOperator(a, b, op));
         }
         operators.push(token);
       }
@@ -109,37 +103,35 @@ export class CalculatorComponent {
     }
 
     while (operators.length) {
-      values.push(this.applyOperator(values.pop()!, values.pop()!, operators.pop()!));
+      const b = values.pop()!;
+      const a = values.pop()!;
+      const op = operators.pop()!;
+      values.push(this.applyOperator(a, b, op));
     }
 
     return values.pop()!;
   }
 
-  // 数式をトークンに分割する関数
   private tokenize(expression: string): string[] {
     const regex = /\d+(\.\d*)?|\+|\-|\*|\//g;
     return expression.match(regex) || [];
   }
 
-  // 数字かどうかを判定
   private isNumber(value: string): boolean {
     return !isNaN(parseFloat(value));
   }
 
-  // 演算子かどうかを判定
   private isOperator(value: string): boolean {
     return ['+', '-', '*', '/'].includes(value);
   }
 
-  // 演算子の優先順位をチェック
   private hasPrecedence(op1: string, op2: string): boolean {
     if ((op1 === '*' || op1 === '/') && (op2 === '+' || op2 === '-')) {
-      return false; // '*' と '/' は '+' と '-' より優先される
+      return false;
     }
-    return true;  // それ以外の組み合わせでは、優先度を考慮しない
+    return true;
   }
 
-  // 演算を適用
   private applyOperator(a: number, b: number, op: string): number {
     switch (op) {
       case '+':
@@ -157,8 +149,8 @@ export class CalculatorComponent {
   }
 
   private formatResult(value: number): string {
-    let resultStr = value.toFixed(8); // 小数点以下第9位で切り捨て
-    return resultStr.replace(/\.?0+$/, ''); // 不要なゼロを削除
+    let resultStr = value.toFixed(8);
+    return resultStr.replace(/\.?0+$/, '');
   }
 
   deleteLast(): void {
