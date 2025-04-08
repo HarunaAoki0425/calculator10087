@@ -96,8 +96,11 @@ export class CalculatorComponent {
               } else {
                 this.display = parseFloat(result.toFixed(8)).toString(); // 小数点第9位以降は切り捨て
               }
+              if (!isFinite(result)) {
+                this.display = '未定義';
+              }
           } else {
-              this.display = 'Error';
+            this.display = 'Error';
           }
       } catch {
           this.display = 'Error';
