@@ -1,5 +1,5 @@
 <div class="calculator">
-    <input type="text" id="display" [(ngModel)]="display" disabled class="calculator-display">
+  <div id="display" #displayRef class="calculator-display">{{ display }}</div>
     <div class="buttons">
       <button (click)="press('7')">7</button>
       <button (click)="press('8')">8</button>

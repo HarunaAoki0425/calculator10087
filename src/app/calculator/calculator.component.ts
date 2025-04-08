@@ -1,191 +1,135 @@
 import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms'; 
 
 @Component({
-  selector: 'app-calculator',
-  standalone: true,
-  imports: [FormsModule],
-  templateUrl: './calculator.component.html',
-  styleUrls: ['./calculator.component.css']
+    selector: 'app-calculator',
+    standalone: true,
+    templateUrl: './calculator.component.html',
+    styleUrls: ['./calculator.component.css'],
+    imports: [CommonModule, FormsModule] 
 })
 export class CalculatorComponent {
-  display: string = '';  
-  prevIsOperator: boolean = false; 
-  resultDisplayed: boolean = false; 
+    display: string = ''; // 表示
+    prevIsOperator: boolean = false; // 直前が演算子かどうか
+    resultDisplayed: boolean = false; // 計算結果が表示されたかどうか
 
-  // ボタンを押したときの処理
-  press(value: string): void {
-    // 結果が表示された後に何か入力された場合の処理
-    if (this.resultDisplayed) {
-      if (this.isOperator(value)) {
-        // 演算子の場合、計算式の後ろに追加
-        this.display = this.display + value;
-        this.resultDisplayed = false;
-      } else {
-        // 数字の場合、新しい計算式として設定
-        this.display = value;
-        this.resultDisplayed = false;
-      }
-    } else {
-      // 演算子が押された場合の処理
-      if (this.isOperator(value)) {
-        if (this.prevIsOperator || this.display === '') {
-          // 連続して演算子が入力されることを防ぐ
-          return;
+    // ボタンを押したときの処理
+    press(value: string): void {
+        if (this.resultDisplayed && !this.isOperator(value)) {
+            this.display = '';
         }
-        this.prevIsOperator = true;
-      } else {
-        this.prevIsOperator = false;
-        // 数字または小数点が入力された場合
+
+        // 小数点の直後に演算子・小数点・= は入力不可
+        const lastChar = this.display[this.display.length - 1];
+        if (lastChar === '.' && (this.isOperator(value) || value === '.' || value === '=')) {
+           return;
+        }
+
+        // -以外の演算子は計算の最初に入力できないようにする
+        if (this.isOperator(value) && this.display === '' && value !== '-') {
+             return;
+        }
+
+        // 数字と小数点の形式で値が追加できるか確認する
         if (!this.canAddValue(value)) {
-          return;
+             return;
         }
-      }
-      this.display += value;
-    }
-  
-    // 入力後にスクロール位置を調整
-    this.scrollToEnd();
-  }
 
-  // 数字と小数点の形式で値が追加できるか確認する
-  private canAddValue(value: string): boolean {
-    const next = this.display + value;
-    const lastNumberMatch = next.match(/(\d+(\.\d*)?)$/);
-    if (!lastNumberMatch) return true;
-
-    const [integerPart, decimalPart] = lastNumberMatch[0].split('.');
-    // 整数部分が10桁以上または小数部分が8桁以上なら入力不可
-    if (integerPart.length > 10 || (decimalPart && decimalPart.length > 8)) {
-      return false;
-    }
-
-    return !isNaN(parseFloat(next)) && parseFloat(next) <= 9999999999.99999999;
-  }
-
-  // 入力後にスクロールバーを一番右に移動させる
-  private scrollToEnd(): void {
-    const displayElement = document.getElementById('display');
-    if (displayElement) {
-      displayElement.scrollLeft = displayElement.scrollWidth;  // スクロール位置を右端に調整
-    }
-  }
-
-  // 「=」が押されたときに実行される計算処理
-  evaluate(): void {
-    try {
-      const result = this.calculate(this.display);
-
-      // 100億以上はエラー
-      if (result >= 10000000000) {
-        this.display = 'Error';
-      } else {
-        // 結果を表示
-        this.display = this.formatResult(result);
-      }
-    } catch {
-      this.display = 'Error';  // エラー
-    }
-    this.resultDisplayed = true;
-  }
-
-  // 数式の計算
-  private calculate(expression: string): number {
-    const tokens = this.tokenize(expression);  // 数式をトークンに分解
-    const values: number[] = [];  // 値
-    const operators: string[] = [];  // 演算子
-
-    let i = 0;
-    while (i < tokens.length) {
-      const token = tokens[i];
-
-      // 数字の場合はスタックにプッシュ
-      if (this.isNumber(token)) {
-        values.push(parseFloat(token));
-      } else if (this.isOperator(token)) {
-        // 演算子の場合は適切な順序で計算
-        while (
-          operators.length &&
-          this.hasPrecedence(token, operators[operators.length - 1])
-        ) {
-          const b = values.pop()!;  // スタックから2つの値を取り出す
-          const a = values.pop()!;
-          const op = operators.pop()!;
-          values.push(this.applyOperator(a, b, op));  // 演算結果をスタックに戻す
+        // 演算子の入力ルールを制御
+        if (this.isOperator(value)) {
+         const lastChar = this.display[this.display.length - 1];
+           if (this.isOperator(lastChar)) {
+             // 「-」だけ例外的に許可するケース
+              if (value === '-' && ['+', '*', '/'].includes(lastChar)) {
+             } else {
+              return; // その他の演算子連続はNG
+             }
+             }
         }
-        operators.push(token);  // 演算子をスタックに保存
+
+        // 最初に0が入力された場合、次に数字は入力できないようにする（演算子と小数点は入力できる）
+        if (this.display === '0' && !(this.isOperator(value) || value === '.')) {
+          return; 
+        }
+
+        // 直前が「0」で、その前が演算子の場合、数字の入力を防ぎ、演算子や小数点は入力できるようにする
+        if (this.display.length > 1 && this.display[this.display.length - 1] === '0' && this.isOperator(this.display[this.display.length - 2])) {
+          if (this.isOperator(value) || value === '.') {
+          // 演算子または小数点は入力できる
+          this.display += value;
+           }
+              return; // 数字だけ入力できない
+        }
+
+        //入力
+        if (value === '.') { //小数点が入力されるとき
+          if (this.prevIsOperator || this.display === '') {
+              this.display += '0.';
+          } else {
+              const parts = this.display.split(/[\+\-\*\/]/);
+              const lastChar = this.display[this.display.length - 1];
+              if (parts[parts.length - 1].includes('.')) {
+                  return;
+              }
+              this.display += value;
+          }
+        } else {
+          this.display += value;  // それ以外は通常の入力
       }
-      i++;
+
+        this.prevIsOperator = this.isOperator(value);
+        this.resultDisplayed = false;
     }
 
-    // 演算子が残っていれば順番に計算
-    while (operators.length) {
-      const b = values.pop()!;
-      const a = values.pop()!;
-      const op = operators.pop()!;
-      values.push(this.applyOperator(a, b, op));
+
+    // 計算
+    evaluate(): void {
+        try {
+            const result = new Function('return ' + this.display)();
+            if (result >= 10000000000) {
+                this.display = 'Error';
+            } else {
+                this.display = parseFloat(result.toFixed(8)).toString();
+            }
+        } catch {
+            this.display = 'Error';
+        }
+        this.resultDisplayed = true;
     }
 
-    return values.pop()!;  // 結果
-  }
-
-  // 数式をトークンに分解するメソッド（数字と演算子に分ける）
-  private tokenize(expression: string): string[] {
-    const regex = /\d+(\.\d*)?|\+|\-|\*|\//g;
-    return expression.match(regex) || [];
-  }
-
-  // 数字かどうかを判定
-  private isNumber(value: string): boolean {
-    return !isNaN(parseFloat(value));
-  }
-
-  // 演算子かどうかを判定
-  private isOperator(value: string): boolean {
-    return ['+', '-', '*', '/'].includes(value);
-  }
-
-  // ×÷は＋－より優先
-  private hasPrecedence(op1: string, op2: string): boolean {
-    if ((op1 === '*' || op1 === '/') && (op2 === '+' || op2 === '-')) {
-      return false;
+    // 直前の入力を削除
+    deleteLast(): void {
+        this.display = this.display.slice(0, -1);
+        this.prevIsOperator = this.isOperator(this.display.slice(-1));
     }
-    return true;
-  }
 
-  // 計算を実行
-  private applyOperator(a: number, b: number, op: string): number {
-    switch (op) {
-      case '+':
-        return a + b;
-      case '-':
-        return a - b;
-      case '*':
-        return a * b;
-      case '/':
-        if (b === 0) throw new Error("Cannot divide by zero");
-        return a / b;
-      default:
-        throw new Error("Unknown operator");
+    // 表示をクリア
+    clear(): void {
+        this.display = '';
+        this.prevIsOperator = false;
+        this.resultDisplayed = false;
     }
-  }
 
-  // 結果表示
-  private formatResult(value: number): string {
-    let resultStr = value.toFixed(8);
-    return resultStr.replace(/\.?0+$/, '');  // 小数点以下の0を削除
-  }
+    // + - * / の判定
+    private isOperator(value: string): boolean {
+        return ['+', '-', '*', '/'].includes(value);
+    }
 
-  // 直前の入力だけ削除
-  deleteLast(): void {
-    this.display = this.display.slice(0, -1);
-    this.prevIsOperator = this.isOperator(this.display.slice(-1));
-  }
+    // 数字と小数点の形式で値が追加できるか確認する
+    private canAddValue(value: string): boolean {
+        const next = this.display + value;
+        const lastNumberMatch = next.match(/(\d+(\.\d*)?)$/);
 
-  // 全部削除
-  clear(): void {
-    this.display = '';
-    this.prevIsOperator = false;
-    this.resultDisplayed = false;
-  }
+        if (!lastNumberMatch) return true;
+
+        const [integerPart, decimalPart] = lastNumberMatch[0].split('.');
+
+        // 整数部分が10桁以上または小数部分が8桁以上なら入力不可
+        if (integerPart.length > 10 || (decimalPart && decimalPart.length > 8)) {
+            return false;
+        }
+
+        return !isNaN(parseFloat(next)) && parseFloat(next) <= 9999999999.99999999;
+    }
 }
