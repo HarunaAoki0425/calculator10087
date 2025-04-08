@@ -16,11 +16,13 @@ export class CalculatorComponent {
 
     // ボタンを押したときの処理
     press(value: string): void {
+
+        // 計算結果が表示されてるとき、演算子以外が入力されたらクリア
         if (this.resultDisplayed && !this.isOperator(value)) {
-            this.display = '';
+            this.display = ''; // 数字の場合はクリア→次の計算、演算子の場合はその数字から続けて計算
         }
 
-        // 小数点の直後に演算子・小数点・= は入力不可
+        // 小数点の直後に演算子、小数点、= は入力不可
         const lastChar = this.display[this.display.length - 1];
         if (lastChar === '.' && (this.isOperator(value) || value === '.' || value === '=')) {
            return;
@@ -36,11 +38,11 @@ export class CalculatorComponent {
              return;
         }
 
-        // 演算子の入力ルールを制御
+        // 演算子は連続で入力できない（-は一度だけ連続入力可）
         if (this.isOperator(value)) {
          const lastChar = this.display[this.display.length - 1];
            if (this.isOperator(lastChar)) {
-             // 「-」だけ例外的に許可するケース
+             // -は+*/の後には連続入力可（- -となるのを防ぐ）
               if (value === '-' && ['+', '*', '/'].includes(lastChar)) {
              } else {
               return; // その他の演算子連続はNG
@@ -62,15 +64,15 @@ export class CalculatorComponent {
               return; // 数字だけ入力できない
         }
 
-        //入力
-        if (value === '.') { //小数点が入力されるとき
+        //小数点が入力されるとき
+        if (value === '.') { 
+          // 直前が演算子か空欄の場合は0.と表示
           if (this.prevIsOperator || this.display === '') {
               this.display += '0.';
           } else {
-              const parts = this.display.split(/[\+\-\*\/]/);
-              const lastChar = this.display[this.display.length - 1];
+              const parts = this.display.split(/[\+\-\*\/]/);// 演算子で数値ごとに分割
               if (parts[parts.length - 1].includes('.')) {
-                  return;
+                  return; // 分割した数値の中に小数点がある場合は入力不可
               }
               this.display += value;
           }
