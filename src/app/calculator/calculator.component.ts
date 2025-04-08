@@ -82,20 +82,26 @@ export class CalculatorComponent {
         this.resultDisplayed = false;
     }
 
-
     // 計算
     evaluate(): void {
-        try {
-            const result = new Function('return ' + this.display)();
-            if (result >= 10000000000) {
-                this.display = 'Error';
-            } else {
-                this.display = parseFloat(result.toFixed(8)).toString();
-            }
-        } catch {
-            this.display = 'Error';
-        }
-        this.resultDisplayed = true;
+      try {
+          // 数式を評価
+          const result = new Function('return ' + this.display)();
+          // 結果が数値であれば処理を行う
+          if (typeof result === 'number') {
+              if (Number.isInteger(result)) {
+                  this.display = result.toString();  // 整数の場合はそのまま表示
+              } else {
+                this.display = parseFloat(result.toFixed(8)).toString(); // 小数点第9位以降は切り捨て
+              }
+          } else {
+              this.display = 'Error';
+          }
+      } catch {
+          this.display = 'Error';
+      }
+  
+      this.resultDisplayed = true;
     }
 
     // 直前の入力を削除
