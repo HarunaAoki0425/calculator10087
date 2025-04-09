@@ -1,6 +1,9 @@
 <div class="calculator">
   <div id="display" #displayRef class="calculator-display">{{ display }}</div>
     <div class="buttons">
+      <button class="clear wide" (click)="clear()">AC</button>
+      <button class="clear"(click)="clearEntry()">CE</button>
+      <button class="clear" (click)="deleteLast()">⌫</button>
       <button (click)="press('7')">7</button>
       <button (click)="press('8')">8</button>
       <button (click)="press('9')">9</button>
@@ -12,14 +15,12 @@
       <button (click)="press('1')">1</button>
       <button (click)="press('2')">2</button>
       <button (click)="press('3')">3</button>
-      <button class="operator" (click)="press('-')">-</button>
-      <button class="spacer"></button> <!-- 空白のボタン -->
+      <button class="operator" (click)="press('-')">－</button>
       <button (click)="press('0')">0</button>
       <button (click)="press('.')">.</button>
-      <button class="operator" (click)="press('+')">+</button>
       <button class="equal" (click)="evaluate()">=</button>
-      <button class="clear" (click)="clear()">AC</button>
-      <button class="clear" (click)="deleteLast()">⌫</button>
+      <button class="operator" (click)="press('+')">+</button>
+
     </div>
 </div>
 

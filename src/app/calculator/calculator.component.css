@@ -12,7 +12,7 @@ body {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    border: 1px solid lightgray;
+    border: 1px solid gray;
     text-align: center;
     flex-direction: column;
 }
@@ -31,7 +31,7 @@ body {
     text-align: left;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid lightgray;
+    border: 1px solid gray;
     border-radius: 5px;
     white-space: nowrap; 
     overflow-x: auto; 
@@ -52,7 +52,7 @@ body {
 button {
     width: 100%;
     height: 50px;
-    font-size: 20px;
+    font-size: 25px;
     border: none;
     border-radius: 5px;
     background: lightgray;
@@ -65,36 +65,35 @@ button:hover {
 }
 
 button.operator {
-    background: orange;
+    background-color: rgb(106, 190, 243) ;
     color: white;
+    font-size: 30px;
 }
 
 button.operator:hover {
-    background: rgb(141, 84, 15);
+    background-color: rgb(74, 137, 177);
 }
 
 button.clear {
-    background: red;
+    background: #FFA500;
     color: white;
 }
 
 button.clear:hover {
-    background: darkred;
+    background: rgb(201, 132, 4);
 }
 
-button.spacer {
-    background-color: lightgray; 
-    border: none;
-    border-radius: 5px;
-}
-
-button.equal {
-    grid-column: span 2; 
-    background-color: rgb(112, 228, 112);
+button.equal { 
+    background-color: rgb(106, 190, 243) ;
     color: white;
+    font-size: 30px;
 }
 
 button.equal:hover {
-    background-color: green
+    background-color: rgb(74, 137, 177);
+}
+
+button.wide {
+    grid-column: span 2; 
 }
 
