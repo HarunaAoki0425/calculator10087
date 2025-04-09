@@ -33,7 +33,7 @@ export class CalculatorComponent {
              return;
         }
 
-        // 数字と小数点の形式で値が追加できるか確認する
+        // 上限を超えた数値は入力不可
         if (!this.canAddValue(value)) {
              return;
         }
@@ -56,7 +56,7 @@ export class CalculatorComponent {
         }
 
         // 直前が「0」で、その前が演算子の場合、数字の入力を防ぎ、演算子や小数点は入力できるようにする
-        if (this.display.length > 1 && this.display[this.display.length - 1] === '0' && this.isOperator(this.display[this.display.length - 2])) {
+        if (this.display[this.display.length - 1] === '0' && this.isOperator(this.display[this.display.length - 2])) {
           if (this.isOperator(value) || value === '.') {
           // 演算子または小数点は入力できる
           this.display += value;
@@ -89,13 +89,27 @@ export class CalculatorComponent {
 
       // もし空欄なら何もしない
       if (this.display === '') {
-      return;
+         return;
       }
       // 最後が数値じゃない場合は計算しない（＝が入力できない）
       if (/[+\-*/.]$/.test(this.display)) {
-        return; 
+         return; 
       }
-      
+
+      // ゼロでゼロを割る部分があるかをチェック
+      if (/0\/0/.test(this.display)) {
+       this.display = '結果が定義されていません';
+       this.resultDisplayed = true;
+         return;
+       }
+
+      // ゼロで割る部分がないかをチェック
+      if (/\/0/.test(this.display)) {
+       this.display = '0で割ることはできません';
+       this.resultDisplayed = true;
+         return;
+      }
+
       try {
           // 数式を評価
           const result = new Function('return ' + this.display)();
@@ -105,9 +119,6 @@ export class CalculatorComponent {
                   this.display = result.toString();  // 整数の場合はそのまま表示
               } else {
                 this.display = parseFloat(result.toFixed(8)).toString(); // 小数点第9位以降は切り捨て
-              }
-              if (!isFinite(result)) {
-                this.display = 'Error'; // 0で割ったときはエラーと表示
               }
           } else {
             this.display = 'Error';// 結果が数値でないときはエラーと表示
@@ -119,9 +130,16 @@ export class CalculatorComponent {
       this.resultDisplayed = true;
     }
 
-    // 直前の入力を削除（⌫））
+     // 直前の入力を削除（⌫）
     deleteLast(): void {
+      if (this.resultDisplayed) {
+         // 計算結果が表示されているときは、全て消去
+         this.display = '';
+      } else {
+         // 計算結果が表示されていない場合は、1文字削除
         this.display = this.display.slice(0, -1);
+      }
+         // 演算子の状態を更新
         this.prevIsOperator = this.isOperator(this.display.slice(-1));
     }
 
@@ -154,7 +172,7 @@ export class CalculatorComponent {
         return ['+', '-', '*', '/'].includes(value);
     }
 
-    // 数字と小数点の形式で値が追加できるか確認する
+    // 整数部分と小数部分を分けて上限を設定
     private canAddValue(value: string): boolean {
         const next = this.display + value; // 今ある入力+新しい入力
         const lastNumberMatch = next.match(/(\d+(\.\d*)?)$/);// 最後の数値部分だけ取り出す
