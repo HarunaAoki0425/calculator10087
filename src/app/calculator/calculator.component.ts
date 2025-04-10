@@ -21,18 +21,27 @@ export class CalculatorComponent {
         if (this.resultDisplayed && !this.isOperator(value)) {
             this.display = ''; // 数字・小数点の場合はクリア→次の計算、演算子の場合はその数字から続けて計算
         }
+         
+        // 計算結果が100以上のときはもうそれ以上計算は続けられない（演算子が押せない）
+        if (this.resultDisplayed && this.isOperator(value)) {
+          if (parseFloat(this.display) >= 10000000000 && this.isOperator(value)) {
+            this.display = '100億の桁の数値が含まれる計算はできません';
+            return;
+        }
+      }
 
-        //if (value === '/') { //「/」を「÷」に変換するなら必要
-              //this.display += '÷';
-              //this.prevIsOperator = true;
-              //this.resultDisplayed = false;
-            //return;
-        //}
+        if (value === '/') { //「/」を「÷」に変換するなら必要
+              this.display += '÷';
+              this.prevIsOperator = true;
+              this.resultDisplayed = false;
+              return;
+        }
 
         // エラー表示のときに演算子は入力不可にする
         if (
           (this.display === '0で割ることはできません' ||
            this.display === '結果が定義されていません' ||
+           this.display === '100億の桁の数値が含まれる計算はできません' ||
            this.display === 'Error') &&
            this.isOperator(value)
            ) {
@@ -76,7 +85,7 @@ export class CalculatorComponent {
         // 演算子は連続で入力できない（-は一度だけ連続入力可）
         if (this.isOperator(value)) { // 入力が演算子の場合
             if (this.isOperator(lastChar)) { // 直前が演算子の場合
-               if (value === '-' && ['+', '*', '/'].includes(lastChar)) { // 入力が-で、直前が+、*、/の場合
+               if (value === '-' && ['+', '*', '/', '÷'].includes(lastChar)) { // 入力が-で、直前が+、*、/、÷の場合
               } // -は入力可能
               else {
                return; // その他の演算子連続はNG
@@ -104,7 +113,7 @@ export class CalculatorComponent {
           if (this.prevIsOperator || this.display === '') {
               this.display += '0.';
           } else {
-              const parts = this.display.split(/[\+\-\*\/]/);// 演算子で数値ごとに分割
+              const parts = this.display.split(/[\+\-\*\/\÷]/);// 演算子で数値ごとに分割
               if (parts[parts.length - 1].includes('.')) {
                   return; // 分割した数値の中に小数点がある場合は入力不可
               }
@@ -126,7 +135,7 @@ export class CalculatorComponent {
          return;
       }
       // 最後が数値じゃない場合は計算しない（＝が入力できない）
-      if (/[+\-*/.]$/.test(this.display)) {
+      if (/[+\-*\/\÷.]$/.test(this.display)) {
          return; 
       }
       // 最初が-で、他に演算子が含まれていない場合は何もしない（-0=0を防ぐ）
@@ -138,6 +147,7 @@ export class CalculatorComponent {
       if (
          this.display === '0で割ることはできません' ||
          this.display === '結果が定義されていません' ||
+         this.display === '100億の桁の数値が含まれる計算はできません' ||
          this.display === 'Error'
        ) {
          return;
@@ -145,8 +155,8 @@ export class CalculatorComponent {
 
       // 「0/0」または「0/-0」が含まれるかチェック（どこにあっても）
       // 0/0と0で割るのが両方出てきた場合、0/0の処理を優先
-      const undefinedPattern = /(^|[^0-9.])0\/-?0(?![\d.])/;
-      const divideByZeroPattern = /\/-?0(?![\d.])/;
+      const undefinedPattern = /(^|[^0-9.])0÷-?0(?![\d.])/;
+      const divideByZeroPattern = /÷-?0(?![\d.])/;
       // 0/0の場合
       if (undefinedPattern.test(this.display)) {
          this.display = '結果が定義されていません';
@@ -161,11 +171,11 @@ export class CalculatorComponent {
       }
 
       // 「/」を「÷」に変換するなら必要（元に戻す処理）
-      //const expression = this.display.replace(/÷/g, '/');
+      const expression = this.display.replace(/÷/g, '/');
 
       try {
           // 数式を評価
-          const result = new Function('return ' + this.display)();
+          const result = new Function('return ' + expression)();
           // 結果が数値であれば処理を行う
           if (typeof result === 'number') {
               if (Number.isInteger(result)) {
@@ -199,7 +209,7 @@ export class CalculatorComponent {
     // 直前の数値を削除（CE）
     clearEntry(): void {
       // 最後の演算子を取得
-      const operatorIndex = this.display.search(/[\+\-\*\/](?=[^+\-\*\/]*$)/); 
+      const operatorIndex = this.display.search(/[\+\-\*\/\÷](?=[^+\-\*\/\÷]*$)/); 
   
       if (operatorIndex !== -1) {
           // 演算子がある場合、演算子以降の数値部分を削除
@@ -222,7 +232,7 @@ export class CalculatorComponent {
 
     // + - * / の判定
     private isOperator(value: string): boolean {
-        return ['+', '-', '*', '/'].includes(value);
+        return ['+', '-', '*', '/', '÷'].includes(value);
     }
 
     // 整数部分と小数部分を分けて上限を設定
