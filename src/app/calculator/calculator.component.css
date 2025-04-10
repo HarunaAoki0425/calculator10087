@@ -67,7 +67,7 @@ button:hover {
 button.operator {
     background-color: rgb(106, 190, 243) ;
     color: white;
-    font-size: 30px;
+    font-size: 35px;
 }
 
 button.operator:hover {

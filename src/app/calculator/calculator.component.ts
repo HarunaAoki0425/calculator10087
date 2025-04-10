@@ -22,6 +22,23 @@ export class CalculatorComponent {
             this.display = ''; // 数字・小数点の場合はクリア→次の計算、演算子の場合はその数字から続けて計算
         }
 
+        //if (value === '/') { //「/」を「÷」に変換するなら必要
+              //this.display += '÷';
+              //this.prevIsOperator = true;
+              //this.resultDisplayed = false;
+              //return;
+        //}
+
+        // エラー表示のときに演算子は入力不可にする
+        if (
+          (this.display === '0で割ることはできません' ||
+           this.display === '結果が定義されていません' ||
+           this.display === 'Error') &&
+           this.isOperator(value)
+           ) {
+             return;
+        }
+
         // 小数点の直後に演算子、小数点は入力不可
         const lastChar = this.display[this.display.length - 1];
         if (lastChar === '.' && (this.isOperator(value) || value === '.')) {
@@ -38,17 +55,34 @@ export class CalculatorComponent {
              return;
         }
 
+        // 1--1を可能にするなら必要
+        // 連続した-は入力不可
+        // if (value === '-') {
+        //   const secondLastChar = this.display[this.display.length - 2]; // 2番目に最後の文字
+          //if (lastChar === '-' && secondLastChar === '-') { //１つ前と２つ前が-の場合
+            //return; // 入力不可
+          //}
+        //}
+
+        // 連続した--は+に変換
+            //if (!this.isOperator(value) && !isNaN(Number(value)) || value === '.') {
+          //const lastTwoChars = this.display.slice(-2); // 最後の'2文字を取り出す
+          //if (lastTwoChars === '--') {
+          // `--` が直前にあり、現在の入力が数字の場合
+          //this.display = this.display.slice(0, -2) + '+'; // `--` を `+` に置き換えた後、数字を追加
+            //}
+        //}
+   
         // 演算子は連続で入力できない（-は一度だけ連続入力可）
-        if (this.isOperator(value)) {
-         const lastChar = this.display[this.display.length - 1];
-           if (this.isOperator(lastChar)) {
-             // -は+*/の後には連続入力可（- -となるのを防ぐ）
-              if (value === '-' && ['+', '*', '/'].includes(lastChar)) {
-             } else {
-              return; // その他の演算子連続はNG
-             }
-             }
-        }
+        if (this.isOperator(value)) { // 入力が演算子の場合
+            if (this.isOperator(lastChar)) { // 直前が演算子の場合
+               if (value === '-' && ['+', '*', '/'].includes(lastChar)) { // 入力が-で、直前が+、*、/の場合
+              } // -は入力可能
+              else {
+               return; // その他の演算子連続はNG
+              }
+              }
+         }
 
         // 最初に0が入力された場合、次に数字は入力できないようにする（演算子と小数点は入力できる）
         if (this.display === '0' && !(this.isOperator(value) || value === '.')) {
@@ -79,7 +113,7 @@ export class CalculatorComponent {
         } else {
           this.display += value;  // それ以外は通常の入力
       }
-
+       
         this.prevIsOperator = this.isOperator(value);
         this.resultDisplayed = false;
     }
@@ -95,20 +129,39 @@ export class CalculatorComponent {
       if (/[+\-*/.]$/.test(this.display)) {
          return; 
       }
-
-      // ゼロでゼロを割る部分があるかをチェック
-      if (/0\/0/.test(this.display)) {
-       this.display = '結果が定義されていません';
-       this.resultDisplayed = true;
-         return;
-       }
-
-      // ゼロで割る部分がないかをチェック
-      if (/\/0/.test(this.display)) {
-       this.display = '0で割ることはできません';
-       this.resultDisplayed = true;
+      // 最初が-で、他に演算子が含まれていない場合は何もしない（-0=0を防ぐ）
+      if (this.display.startsWith('-') && !/[+\*/]/.test(this.display.slice(1))) {
          return;
       }
+
+      // すでにエラーメッセージが表示されている場合は何もしない
+      if (
+         this.display === '0で割ることはできません' ||
+         this.display === '結果が定義されていません' ||
+         this.display === 'Error'
+       ) {
+         return;
+      }
+
+      // 「0/0」または「0/-0」が含まれるかチェック（どこにあっても）
+      // 0/0と0で割るのが両方出てきた場合、0/0の処理を優先
+      const undefinedPattern = /(^|[^0-9.])0\/-?0(?![\d.])/;
+      const divideByZeroPattern = /\/-?0(?![\d.])/;
+      // 0/0の場合
+      if (undefinedPattern.test(this.display)) {
+         this.display = '結果が定義されていません';
+         this.resultDisplayed = true; //この後数字を押したら計算を開始できる
+         return;
+      }
+      // 0で割る場合
+      if (divideByZeroPattern.test(this.display)) {
+         this.display = '0で割ることはできません';
+         this.resultDisplayed = true; //この後数字を押したら計算を開始できる
+         return;
+      }
+
+      // 「/」を「÷」に変換するなら必要（元に戻す処理）
+      //const expression = this.display.replace(/÷/g, '/');
 
       try {
           // 数式を評価
