@@ -26,7 +26,7 @@ export class CalculatorComponent {
               //this.display += '÷';
               //this.prevIsOperator = true;
               //this.resultDisplayed = false;
-              //return;
+            //return;
         //}
 
         // エラー表示のときに演算子は入力不可にする
