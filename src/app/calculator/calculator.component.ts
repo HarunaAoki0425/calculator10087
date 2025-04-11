@@ -14,7 +14,7 @@ export class CalculatorComponent {
     prevIsOperator: boolean = false; // 直前が演算子かどうか
     resultDisplayed: boolean = false; // 計算結果が表示されたかどうか
     currentEquation: string = ''; // 現在の式
-
+    lastResult: string = ' '; // 直前の計算結果
 
     // ボタンを押したときの処理
     press(value: string): void {
@@ -32,7 +32,7 @@ export class CalculatorComponent {
         // 計算結果が100以上のときはもうそれ以上計算は続けられない（演算子が押せない）
         if (this.resultDisplayed && this.isOperator(value)) {
           if (parseFloat(this.display) >= 10000000000 && this.isOperator(value)) {
-            this.display = '100億の桁の数値が含まれる計算はできません';
+            this.display = '100億以上の桁の数値が含まれる計算はできません';
             return;
         }
       }
@@ -41,7 +41,7 @@ export class CalculatorComponent {
         if (
           (this.display === '0で割ることはできません' ||
            this.display === '結果が定義されていません' ||
-           this.display === '100億の桁の数値が含まれる計算はできません' ||
+           this.display === '100億以上の桁の数値が含まれる計算はできません' ||
            this.display === 'Error') &&
            this.isOperator(value)
            ) {
@@ -153,7 +153,7 @@ export class CalculatorComponent {
       if (
          this.display === '0で割ることはできません' ||
          this.display === '結果が定義されていません' ||
-         this.display === '100億の桁の数値が含まれる計算はできません' ||
+         this.display === '100億以上の桁の数値が含まれる計算はできません' ||
          this.display === 'Error'
        ) {
          return;
@@ -189,6 +189,7 @@ export class CalculatorComponent {
               } else {
                 this.display = parseFloat(result.toFixed(8)).toString(); // 小数点第9位以降は切り捨て
               }
+              this.lastResult = this.display; // 直前の計算結果を保存
           } else {
             this.display = 'Error';// 結果が数値でないときはエラーと表示
           }
@@ -201,6 +202,12 @@ export class CalculatorComponent {
 
      // 直前の入力を削除（⌫）
     deleteLast(): void {
+      // 100億以上の桁の数値が含まれる計算はできませんの場合は直前の計算結果を表示
+      if (this.display === '100億以上の桁の数値が含まれる計算はできません') {
+          this.display = this.lastResult;
+          this.resultDisplayed = true;
+        return;
+      }
       if (this.resultDisplayed) {
          // 計算結果が表示されているときは直前の計算式を復元
          this.display = this.currentEquation;
