@@ -29,10 +29,10 @@ export class CalculatorComponent {
           this.currentEquation = this.display;
         }
 
-        // 計算結果が100以上のときはもうそれ以上計算は続けられない（演算子が押せない）
+        // 計算結果が100以上のときはもうそれ以上計算は続けられない（演算子を押したらエラー）
         if (this.resultDisplayed && this.isOperator(value)) {
           if (parseFloat(this.display) >= 10000000000 && this.isOperator(value)) {
-            this.display = '100億以上の桁の数値が含まれる計算はできません';
+            this.display = '100億以上の桁の数値が含まれる計算はできません'; // エラー文言
             return;
         }
       }
@@ -49,7 +49,7 @@ export class CalculatorComponent {
         }
 
         // 小数点の直後に演算子、小数点は入力不可
-        const lastChar = this.display[this.display.length - 1];
+        const lastChar = this.display[this.display.length - 1]; // 直近の入力
         if (lastChar === '.' && (this.isOperator(value) || value === '.')) {
            return;
         }
@@ -125,12 +125,12 @@ export class CalculatorComponent {
               this.display += value;
           }
         } else {
-          this.display += value;  // それ以外は通常の入力
+          this.display += value;  // それ以外は通常の入力（ここですべての入力を表している
       }
        
         this.prevIsOperator = this.isOperator(value);
-        this.resultDisplayed = false;
-        this.currentEquation = this.display;
+        this.resultDisplayed = false; // 計算結果が表示されていない状態
+        this.currentEquation = this.display; // 表示されている式は保存されている
     }
 
     // 計算
@@ -161,8 +161,8 @@ export class CalculatorComponent {
 
       // 「0/0」または「0/-0」が含まれるかチェック（どこにあっても）
       // 0/0と0で割るのが両方出てきた場合、0/0の処理を優先
-      const undefinedPattern = /(^|[^0-9.])0÷-?0(?![\d.])/;
-      const divideByZeroPattern = /÷-?0(?![\d.])/;
+      const undefinedPattern = /(^|[^0-9.])0÷-?0(?![\d.])/; // 0/0
+      const divideByZeroPattern = /÷-?0(?![\d.])/; // 0で割る
       // 0/0の場合
       if (undefinedPattern.test(this.display)) {
          this.display = '結果が定義されていません';
@@ -204,8 +204,8 @@ export class CalculatorComponent {
     deleteLast(): void {
       // 100億以上の桁の数値が含まれる計算はできませんの場合は直前の計算結果を表示
       if (this.display === '100億以上の桁の数値が含まれる計算はできません') {
-          this.display = this.lastResult;
-          this.resultDisplayed = true;
+          this.display = this.lastResult; // 直前の計算結果を表示
+          this.resultDisplayed = true; // 計算結果が表示されている状態にする
         return;
       }
       if (this.resultDisplayed) {
