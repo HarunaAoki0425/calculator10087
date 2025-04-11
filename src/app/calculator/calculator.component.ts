@@ -10,9 +10,11 @@ import { FormsModule } from '@angular/forms';
     imports: [CommonModule, FormsModule] 
 })
 export class CalculatorComponent {
-    display: string = ''; // 表示
+    display: string = ''; // 表示されているもの
     prevIsOperator: boolean = false; // 直前が演算子かどうか
     resultDisplayed: boolean = false; // 計算結果が表示されたかどうか
+    currentEquation: string = ''; // 現在の式
+
 
     // ボタンを押したときの処理
     press(value: string): void {
@@ -21,7 +23,12 @@ export class CalculatorComponent {
         if (this.resultDisplayed && !this.isOperator(value)) {
             this.display = ''; // 数字・小数点の場合はクリア→次の計算、演算子の場合はその数字から続けて計算
         }
-         
+        
+        // 計算結果が表示されているとき式を保存
+        if (!this.resultDisplayed) {
+          this.currentEquation = this.display;
+        }
+
         // 計算結果が100以上のときはもうそれ以上計算は続けられない（演算子が押せない）
         if (this.resultDisplayed && this.isOperator(value)) {
           if (parseFloat(this.display) >= 10000000000 && this.isOperator(value)) {
@@ -29,13 +36,6 @@ export class CalculatorComponent {
             return;
         }
       }
-
-        if (value === '/') { //「/」を「÷」に変換するなら必要
-              this.display += '÷';
-              this.prevIsOperator = true;
-              this.resultDisplayed = false;
-              return;
-        }
 
         // エラー表示のときに演算子は入力不可にする
         if (
@@ -59,33 +59,38 @@ export class CalculatorComponent {
              return;
         }
 
+
         // 上限を超えた数値は入力不可
         if (!this.canAddValue(value)) {
              return;
         }
 
         // 1--1を可能にするなら必要
-        // 連続した-は入力不可
+        // -の連続は2つまで
         // if (value === '-') {
-        //   const secondLastChar = this.display[this.display.length - 2]; // 2番目に最後の文字
-          //if (lastChar === '-' && secondLastChar === '-') { //１つ前と２つ前が-の場合
+          //const secondLastChar = this.display[this.display.length - 2]; // 2番目に最後の文字
+          //if (this.display.length === 1 && lastChar === '-') { // 最初に--は打てない
+            //return;
+          //}
+           // すでに演算子が2つ続いている場合（+-や*-のあとにさらに-入力しようとしている）
+          //if (this.isOperator(lastChar) &&this.isOperator(secondLastChar)) {
             //return; // 入力不可
           //}
         //}
 
         // 連続した--は+に変換
-            //if (!this.isOperator(value) && !isNaN(Number(value)) || value === '.') {
-          //const lastTwoChars = this.display.slice(-2); // 最後の'2文字を取り出す
-          //if (lastTwoChars === '--') {
-          // `--` が直前にあり、現在の入力が数字の場合
-          //this.display = this.display.slice(0, -2) + '+'; // `--` を `+` に置き換えた後、数字を追加
+          //if (!this.isOperator(value) && !isNaN(Number(value)) || value === '.') {
+            //const lastTwoChars = this.display.slice(-2); // 最後の'2文字を取り出す
+            //if (lastTwoChars === '--') {
+            // `--` が直前にあり、現在の入力が数字の場合
+            //this.display = this.display.slice(0, -2) + '+'; // `--` を `+` に置き換えた後、数字を追加
             //}
         //}
    
         // 演算子は連続で入力できない（-は一度だけ連続入力可）
         if (this.isOperator(value)) { // 入力が演算子の場合
             if (this.isOperator(lastChar)) { // 直前が演算子の場合
-               if (value === '-' && ['+', '*', '/', '÷', '×'].includes(lastChar)) { // 入力が-で、直前が+、*、/、÷の場合
+               if (value === '-' && ['+', '*', '/', '÷', '×'].includes(lastChar)) { // 入力が-で、直前が-以外の演算子の場合  (1--1を可能にする場合は'-'を入れる)
               } // -は入力可能
               else {
                return; // その他の演算子連続はNG
@@ -125,6 +130,7 @@ export class CalculatorComponent {
        
         this.prevIsOperator = this.isOperator(value);
         this.resultDisplayed = false;
+        this.currentEquation = this.display;
     }
 
     // 計算
@@ -139,7 +145,7 @@ export class CalculatorComponent {
          return; 
       }
       // 最初が-で、他に演算子が含まれていない場合は何もしない（-0=0を防ぐ）
-      if (this.display.startsWith('-') && !/[+\*/\÷\×]/.test(this.display.slice(1))) {
+      if (this.display.startsWith('-') && !/[+\-\*/\÷\×]/.test(this.display.slice(1))) {
          return;
       }
 
@@ -196,8 +202,9 @@ export class CalculatorComponent {
      // 直前の入力を削除（⌫）
     deleteLast(): void {
       if (this.resultDisplayed) {
-         // 計算結果が表示されているときは、全て消去
-         this.display = '';
+         // 計算結果が表示されているときは直前の計算式を復元
+         this.display = this.currentEquation;
+         this.resultDisplayed = false; // 計算結果が表示されていない状態に戻す
       } else {
          // 計算結果が表示されていない場合は、1文字削除
         this.display = this.display.slice(0, -1);
@@ -210,10 +217,15 @@ export class CalculatorComponent {
     clearEntry(): void {
       // 最後の演算子を取得
       const operatorIndex = this.display.search(/[\+\-\*\/\÷\×](?=[^+\-\*\/\÷\×]*$)/); 
-  
+      
+      // 演算子がある場合
       if (operatorIndex !== -1) {
-          // 演算子がある場合、演算子以降の数値部分を削除
-          this.display = this.display.slice(0, operatorIndex + 1);
+        const prevChar = this.display[operatorIndex - 1];// 演算子の直前の文字を確認（直前の数値が負の数か確認）
+          if (prevChar && /[\+\-\*\/\÷\×]/.test(prevChar)) { // 直前が演算子の場合その演算子と数値を消す（1+-2→-2が消される）
+          this.display = this.display.slice(0, operatorIndex - 1 + 1);
+        } else {
+          this.display = this.display.slice(0, operatorIndex + 1); 
+        }
       } else {
           // 演算子がない場合、表示されているものをすべて消す
           this.display = '';
