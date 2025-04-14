@@ -1,5 +1,5 @@
 <div class="calculator">
-  <div id="display" #displayRef class="calculator-display">{{ display }}</div>
+  <div id="display" #displayRef class="calculator-display">{{ displayWithCommas() }}</div>
     <div class="buttons">
       <button class="clear wide" (click)="clear()">AC</button>
       <button class="clear"(click)="clearEntry()">CE</button>
