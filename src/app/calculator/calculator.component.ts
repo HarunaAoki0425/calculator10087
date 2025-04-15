@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser'; 
 
 @Component({
     selector: 'app-calculator',
@@ -32,7 +33,9 @@ export class CalculatorComponent {
         }
         // 演算子が入力された場合
         if (this.isOperator(value)) { 
-          if (parseFloat(this.display) >= 10000000000) { // 計算結果が100億以上の場合
+           // 計算結果の文字列から符号と小数点を除いた数字部分の長さをチェック
+          const integerPart = this.display.replace(/^-/, '').replace(/\./, '');
+          if (integerPart.length >= 11) { //11桁以上＝100億以上の桁の数値が含まれるなら
             this.display = '100億以上の桁の数値が含まれる計算はできません'; // エラー文言
             return;
           }
@@ -296,7 +299,7 @@ export class CalculatorComponent {
     }
 
     // カンマ付きの表示
-    displayWithCommas(): string {
+   displayWithCommas(): string {
       // エラー文言のときはそのまま
       if (
         this.display === '0で割ることはできません' ||
@@ -336,6 +339,7 @@ export class CalculatorComponent {
         // nextは数値であり、9999999999.99999999以下であることを確認（念のため）
         return !isNaN(parseFloat(next)) && parseFloat(next) <= 9999999999.99999999;
     }
+
 }
 
      
