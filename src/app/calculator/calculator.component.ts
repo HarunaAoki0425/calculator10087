@@ -13,8 +13,8 @@ export class CalculatorComponent {
     display: string = '0'; // 表示されているもの、初期値0
     prevIsOperator: boolean = false; // 直前が演算子かどうか
     resultDisplayed: boolean = false; // 計算結果が表示されたかどうか
-    currentEquation: string = ''; // 現在の式
     lastResult: string = ' '; // 直前の計算結果
+    displayIsEmpty: boolean = true; // 表示が空欄かどうか
 
     // ボタンを押したときの処理
     press(value: string): void {
@@ -26,7 +26,7 @@ export class CalculatorComponent {
            this.display === '結果が定義されていません' ||
            this.display === '100億以上の桁の数値が含まれる計算はできません' ||
            this.display === 'Error') &&
-           (this.isOperator(value) || value === '.')
+           (this.isOperator(value) )
            ) {
              return;
         }
@@ -45,27 +45,16 @@ export class CalculatorComponent {
         else if (/\d/.test(value)) {
           this.display = value;  // 数字が入力されたら表示をリセットして、その数字から新たに計算を始める
           this.resultDisplayed = false; // 計算結果は表示されていない状態
-          // 小数点が入力された場合
-         } else if (value === '.') {
-          if (parseFloat(this.display) >= 10000000000) { // 計算結果が100億以上の場合
-            this.display = '100億以上の桁の数値が含まれる計算はできません'; // エラー文言
-            return;
-          }
-          // 計算結果が100未満で小数点が含まれていない場合
-          if (!this.display.includes('.') && parseFloat(this.display) < 10000000000) {
-              this.display += value;  // 小数点を追加、その後の計算に使える
-          }
-          this.resultDisplayed = false; // 計算結果をクリア
+         } 
+         // 小数点が入力された場合
+        else if (value === '.') {
+           this.display = '0.'; // 小数点を入力したら0.から新たに計算を始める
+           this.resultDisplayed = false; // 計算結果をクリア
          }
           return; // 計算結果が表示されているときはこれ以上の入力を処理しない
         }   
-        
-        // 入力中は式を保存
-        if (!this.resultDisplayed) {
-          this.currentEquation = this.display;
-        }
 
-        // 小数点の直後に演算子、小数点は入力不可
+        // 小数点の直後に演算子と小数点は入力不可
         const lastChar = this.display[this.display.length - 1]; // 直近の入力
         if (lastChar === '.' && (this.isOperator(value) || value === '.')) {
            return;
@@ -76,18 +65,25 @@ export class CalculatorComponent {
              return;
         }
   
-
-        // 最初の数字もしくは-は初期値の0を置き換えて表示
-        if  (this.display === '0' ) {
-          if (/\d/.test(value))  {// 数字の場合
+        // 最初の数字は初期値０を置き換えて表示
+        if (this.display === '0' && /\d/.test(value))  {
             this.display = value;
+            this.displayIsEmpty = false; // 表示が空欄でないことを示す
             return;
-          }
-          if (value === '-') {// -の場合
-            this.display = value;
+        }
+
+        // 初期値のときに-が押されたら（-と0-の場合分け）
+        if (this.display === '0' && value === '-') {
+            if (this.displayIsEmpty === true) { // 表示が空欄の場合
+            this.display = value; // 初期値０を置き換えて表示
             this.prevIsOperator = true; // 直前が演算子の状態
             return;
-          }
+           }
+           else { // 表示が空欄でない場合（直前に０が押されている場合）
+            this.display += value; // 0-と表示
+            this.prevIsOperator = true; // 直前が演算子の状態
+            return;
+           }
         }
 
         // 演算子の入力
@@ -96,11 +92,16 @@ export class CalculatorComponent {
          const valueIsOperator = ['+', '-', '×', '÷'].includes(value); // 入力が演算子かどうか
          const lastTwoAreOperators = ['+', '-', '×', '÷'].includes(lastOperator) && ['+', '-', '×', '÷'].includes(secondLastOperator); // 直前とその前が演算子かどうか
          const combo = lastOperator + value; // 直前の演算子と入力を結合
-         const firstIsNegative = /^-\d*\.?\d*$/.test(this.display);
+         const firstIsNegative = /^-\d*\.?\d*$/.test(this.display); // 最初が-の場合
 
 
         // 3つ以上演算子は連続で入力できない
         if (valueIsOperator && lastTwoAreOperators) {
+           return;
+        }
+
+        // 初期値マイナスは演算子に置き換えさせない
+        if (['-+', '-×', '-÷'].includes(combo) && firstIsNegative) {
            return;
         }
 
@@ -112,13 +113,6 @@ export class CalculatorComponent {
         // 同じ演算子が連続 → 無視
           return;
         
-        case '-+':
-        case '-×':
-        case '-÷':
-          if (firstIsNegative) return; // 最初が-なら変換不可
-          this.display = this.display.slice(0, -1) + value;
-          return;
-
         case '+-':
         case '+×':
         case '+÷':
@@ -139,7 +133,7 @@ export class CalculatorComponent {
             break;
 
         default:
-        // 直前が演算子かつ今回も演算子で combo に該当しないものがあれば、無視 
+        // 何にも当てはまらなかったら無視（予防線）
         if (['+', '-', '×', '÷'].includes(lastOperator) && ['+', '-', '×', '÷'].includes(value)) {
             return;
         }
@@ -173,7 +167,6 @@ export class CalculatorComponent {
        
         this.prevIsOperator = this.isOperator(value);
         this.resultDisplayed = false; // 計算結果が表示されていない状態
-        this.currentEquation = this.display; // 表示されている式は保存されている
     }
 
     // 計算
@@ -202,7 +195,7 @@ export class CalculatorComponent {
          return;
       }
 
-      // 「0/0」または「0/-0」が含まれるかチェック（どこにあっても）
+      // 「0/0」または「0/-0」または0で割る部分が含まれるかチェック（どこにあっても）
       // 0/0と0で割るのが両方出てきた場合、0/0の処理を優先
       const undefinedPattern = /(^|[^0-9.])0+(?:\.0+)?÷-?0+(?:\.0+)?(?![\d.])/; // 0/0
       const divideByZeroPattern = /÷-?0+(?:\.0+)?(?![\d.])/; // 0で割る
@@ -245,23 +238,16 @@ export class CalculatorComponent {
 
      // 直前の入力を削除（⌫）
     deleteLast(): void {
-      // 100億以上の桁の数値が含まれる計算はできませんの場合は直前の計算結果を表示
-      if (this.display === '100億以上の桁の数値が含まれる計算はできません') {
-          this.display = this.lastResult; // 直前の計算結果を表示
-          this.resultDisplayed = true; // 計算結果が表示されている状態にする
-        return;
-      }
+      // 計算結果が表示されている場合は何もしない
       if (this.resultDisplayed) {
-         // 計算結果が表示されているときは直前の計算式を復元
-         this.display = this.currentEquation;
-         this.resultDisplayed = false; // 計算結果が表示されていない状態に戻す
+        return;
       } else {
          // 計算結果が表示されていない場合は、1文字削除
         this.display = this.display.slice(0, -1);
       }
       if (this.display.length === 0) {
         this.display = '0'; // 最後の1文字を消した後は0を表示
-        this.currentEquation = '';
+        this.displayIsEmpty = true;
     }    
          // 演算子の状態を更新
         this.prevIsOperator = this.isOperator(this.display.slice(-1));
@@ -269,10 +255,6 @@ export class CalculatorComponent {
 
     // 直前の数値を削除（CE）
     clearEntry(): void {
-      // 初期値から置き換えられた-しかない場合は何もしない
-      if (this.display === '-') {
-        return;
-      }
       // 直近が演算子2つ（例: 1*-）の場合は何もしない
       if (this.display.match(/[\+\-\×\÷]{2}$/)) {
           return;
@@ -283,7 +265,7 @@ export class CalculatorComponent {
       // 演算子がある場合
       if (operatorIndex !== -1) {
         const prevChar = this.display[operatorIndex - 1];// 演算子の直前の文字を確認（直前の数値が負の数か確認）
-          if (prevChar && /[\+\-\×\÷]/.test(prevChar)) { // 直前が演算子の場合その演算子と数値を消す（1+-2→-2が消される）
+          if (prevChar && /[\+\-\×\÷]/.test(prevChar)) { // 直前が演算子の場合その演算子と数値を消す（1×-2→-2が消される）
           this.display = this.display.slice(0, operatorIndex - 1 + 1);
         } else {
           this.display = this.display.slice(0, operatorIndex + 1); 
@@ -292,14 +274,13 @@ export class CalculatorComponent {
          this.display = '0';
          this.prevIsOperator = false;
          this.resultDisplayed = false;
-         this.currentEquation = ''
+         this.displayIsEmpty = true;
          return;
       }
       if (this.display.startsWith('-') || this.resultDisplayed) { // 負の数のみの入力もしくは計算結果が表示されている場合全削除
           this.display = '0';
           this.prevIsOperator = false;
           this.resultDisplayed = false;
-          this.currentEquation = ''; 
           return;
         }
       // 実行後は直前が演算子である状態にする
@@ -311,7 +292,7 @@ export class CalculatorComponent {
         this.display = '0';
         this.prevIsOperator = false;
         this.resultDisplayed = false;
-        this.currentEquation = '';
+        this.displayIsEmpty = true;
     }
 
     // カンマ付きの表示
