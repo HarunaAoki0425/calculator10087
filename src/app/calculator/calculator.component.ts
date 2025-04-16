@@ -1,7 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms'; 
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser'; 
 
 @Component({
     selector: 'app-calculator',
@@ -25,7 +24,7 @@ export class CalculatorComponent {
         if ( // エラー表示の時に演算子や小数点を押しても何も起こらない
           (this.display === '0で割ることはできません' ||
            this.display === '結果が定義されていません' ||
-           this.display === '100億以上の桁の数値が含まれる計算はできません' ||
+           this.display === '11桁以上の計算結果は表示できません' ||
            this.display === 'Error') &&
            (this.isOperator(value) )
            ) {
@@ -33,12 +32,6 @@ export class CalculatorComponent {
         }
         // 演算子が入力された場合
         if (this.isOperator(value)) { 
-           // 計算結果の文字列から符号と小数点を除いた数字部分の長さをチェック
-          const integerPart = this.display.replace(/^-/, '').replace(/\./, '');
-          if (integerPart.length >= 11) { //11桁以上＝100億以上の桁の数値が含まれるなら
-            this.display = '100億以上の桁の数値が含まれる計算はできません'; // エラー文言
-            return;
-          }
           // 計算結果が100億未満で演算子が入力されたらその結果から次の計算を続ける
           this.display = this.lastResult; // 直前の計算結果を表示
           this.display += value;  // 演算子を追加
@@ -175,8 +168,12 @@ export class CalculatorComponent {
     // 計算
     evaluate(): void {
 
-      // もし空欄なら何もしない
+      // 空欄なら何もしない
       if (this.display === '0') {
+         return;
+      }
+      // 表示されているのが数字のみなら何もしない
+      if (/^\d+(\.\d+)?$/.test(this.display)) {
          return;
       }
       // 最後が数値じゃない場合は計算しない（＝が入力できない）
@@ -192,7 +189,7 @@ export class CalculatorComponent {
       if (
          this.display === '0で割ることはできません' ||
          this.display === '結果が定義されていません' ||
-         this.display === '100億以上の桁の数値が含まれる計算はできません' ||
+         this.display === '11桁以上の計算結果は表示できません' ||
          this.display === 'Error'
        ) {
          return;
@@ -223,10 +220,13 @@ export class CalculatorComponent {
           const result = new Function('return ' + expression)();
           // 結果が数値であれば処理を行う
           if (typeof result === 'number') {
-              if (Number.isInteger(result)) {
+              if (Math.abs(result) >= 10000000000) {
+              this.display = '11桁以上の計算結果は表示できません';
+              }
+              else if (Number.isInteger(result)) {
                   this.display = result.toString();  // 整数の場合はそのまま表示
               } else {
-                this.display = parseFloat(result.toFixed(8)).toString(); // 小数点第9位以降は切り捨て
+                this.display = Math.floor(result * 1e8) / 1e8 + ''; // 小数点第9位以降を切り捨て
               }
               this.lastResult = this.display; // 直前の計算結果を保存
           } else {
@@ -267,6 +267,14 @@ export class CalculatorComponent {
       
       // 演算子がある場合
       if (operatorIndex !== -1) {
+        // 最初が-で、他に演算子が含まれていない場合は全部削除
+        if (this.display.startsWith('-') && (!/[+\-\×\÷]/.test(this.display.slice(1)))) {
+          this.display = '0';
+          this.prevIsOperator = false;
+          this.resultDisplayed = false;
+          this.displayIsEmpty = true;
+          return;
+        }
         const prevChar = this.display[operatorIndex - 1];// 演算子の直前の文字を確認（直前の数値が負の数か確認）
           if (prevChar && /[\+\-\×\÷]/.test(prevChar)) { // 直前が演算子の場合その演算子と数値を消す（1×-2→-2が消される）
           this.display = this.display.slice(0, operatorIndex - 1 + 1);
@@ -280,12 +288,6 @@ export class CalculatorComponent {
          this.displayIsEmpty = true;
          return;
       }
-      if (this.display.startsWith('-') || this.resultDisplayed) { // 負の数のみの入力もしくは計算結果が表示されている場合全削除
-          this.display = '0';
-          this.prevIsOperator = false;
-          this.resultDisplayed = false;
-          return;
-        }
       // 実行後は直前が演算子である状態にする
       this.prevIsOperator = true;
      }
@@ -304,7 +306,7 @@ export class CalculatorComponent {
       if (
         this.display === '0で割ることはできません' ||
         this.display === '結果が定義されていません' ||
-        this.display === '100億以上の桁の数値が含まれる計算はできません' ||
+        this.display === '11桁以上の計算結果は表示できません' ||
         this.display === 'Error'
       ) {
         return this.display;
