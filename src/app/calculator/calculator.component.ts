@@ -220,13 +220,16 @@ export class CalculatorComponent {
           const result = new Function('return ' + expression)();
           // 結果が数値であれば処理を行う
           if (typeof result === 'number') {
-              if (Math.abs(result) >= 10000000000) {
+              //if (Math.abs(result) < 1e-6) { // 結果が0.000001未満の場合、0と表示（6桁までは正しく制御できるため）
+              //this.display = '0';
+              //}
+               if (Math.abs(result) >= 10000000000) {
               this.display = '11桁以上の計算結果は表示できません';
               }
               else if (Number.isInteger(result)) {
                   this.display = result.toString();  // 整数の場合はそのまま表示
               } else {
-                this.display = Math.floor(result * 1e8) / 1e8 + ''; // 小数点第9位以降を切り捨て
+                this.display = parseFloat(result.toFixed(8)).toString(); // 小数点第9位で四捨五入
               }
               this.lastResult = this.display; // 直前の計算結果を保存
           } else {
@@ -243,7 +246,19 @@ export class CalculatorComponent {
     deleteLast(): void {
       // 計算結果が表示されている場合は何もしない
       if (this.resultDisplayed) {
-        return;
+        if (
+          this.display === '0で割ることはできません' ||
+          this.display === '結果が定義されていません' ||
+          this.display === '11桁以上の計算結果は表示できません' ||
+          this.display === 'Error'
+        ) {
+          this.display = '0';
+          this.prevIsOperator = false;
+          this.resultDisplayed = false;
+          this.displayIsEmpty = true;
+          return;
+        }
+          return;
       } else {
          // 計算結果が表示されていない場合は、1文字削除
         this.display = this.display.slice(0, -1);
