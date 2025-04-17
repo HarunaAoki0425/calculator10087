@@ -24,7 +24,8 @@ export class CalculatorComponent {
         if ( // エラー表示の時に演算子や小数点を押しても何も起こらない
           (this.display === '0で割ることはできません' ||
            this.display === '結果が定義されていません' ||
-           this.display === '11桁以上の計算結果は表示できません' ||
+           this.display === '100億以上の計算結果は表示できません' ||
+           this.display === '-100億以下の計算結果は表示できません' ||
            this.display === 'Error') &&
            (this.isOperator(value) )
            ) {
@@ -189,7 +190,8 @@ export class CalculatorComponent {
       if (
          this.display === '0で割ることはできません' ||
          this.display === '結果が定義されていません' ||
-         this.display === '11桁以上の計算結果は表示できません' ||
+         this.display === '100億以上の計算結果は表示できません' ||
+         this.display === '-100億以下の計算結果は表示できません' ||
          this.display === 'Error'
        ) {
          return;
@@ -220,16 +222,21 @@ export class CalculatorComponent {
           const result = new Function('return ' + expression)();
           // 結果が数値であれば処理を行う
           if (typeof result === 'number') {
-              //if (Math.abs(result) < 1e-6) { // 結果が0.000001未満の場合、0と表示（6桁までは正しく制御できるため）
-              //this.display = '0';
-              //}
-               if (Math.abs(result) >= 10000000000) {
-              this.display = '11桁以上の計算結果は表示できません';
-              }
-              else if (Number.isInteger(result)) {
+            const rounded = Math.round(result * 1e8) / 1e8; // 小数点第9位で四捨五入した結果
+
+            if (result >= 10000000000) {
+              this.display = '100億以上の計算結果は表示できません';
+            } else if (result <= -10000000000) {
+              this.display = '-100億以下の計算結果は表示できません';
+            }
+            else if (Number.isInteger(result)) {
                   this.display = result.toString();  // 整数の場合はそのまま表示
-              } else {
-                this.display = parseFloat(result.toFixed(8)).toString(); // 小数点第9位で四捨五入
+            } else { // 小数の場合
+                if (Math.abs(rounded) < 1e-6) { // 計算結果が1e-6より小さい場合、指数表示の防止（1e-7以下は指数表示になるため）
+                  this.display = result.toFixed(8).replace(/\.?0+$/, '');
+                } else {
+                  this.display = parseFloat(result.toFixed(8)).toString();
+                }
               }
               this.lastResult = this.display; // 直前の計算結果を保存
           } else {
@@ -249,7 +256,8 @@ export class CalculatorComponent {
         if (
           this.display === '0で割ることはできません' ||
           this.display === '結果が定義されていません' ||
-          this.display === '11桁以上の計算結果は表示できません' ||
+          this.display === '100億以上の計算結果は表示できません' ||
+          this.display === '-100億以下の計算結果は表示できません' ||
           this.display === 'Error'
         ) {
           this.display = '0';
@@ -303,6 +311,13 @@ export class CalculatorComponent {
          this.displayIsEmpty = true;
          return;
       }
+      if (this.resultDisplayed) { // 計算結果が表示されている時は全削除（指数表記を消すためなので指数表記を許可するなら）
+        this.display = '0';
+        this.prevIsOperator = false;
+        this.resultDisplayed = false;
+        this.displayIsEmpty = true;
+        return;
+      }
       // 実行後は直前が演算子である状態にする
       this.prevIsOperator = true;
      }
@@ -321,7 +336,8 @@ export class CalculatorComponent {
       if (
         this.display === '0で割ることはできません' ||
         this.display === '結果が定義されていません' ||
-        this.display === '11桁以上の計算結果は表示できません' ||
+        this.display === '100億以上の計算結果は表示できません' ||
+        this.display === '-100億以下の計算結果は表示できません' ||
         this.display === 'Error'
       ) {
         return this.display;
