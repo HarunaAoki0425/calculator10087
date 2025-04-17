@@ -268,13 +268,24 @@ export class CalculatorComponent {
         }
           return;
       } else {
-         // 計算結果が表示されていない場合は、1文字削除
-        this.display = this.display.slice(0, -1);
+        const beforeDelete = this.display; // 削除前の表示
+        this.display = this.display.slice(0, -1); // 計算式入力中は1文字ずつ消す
+    
+        // 計算結果が保存されていて、計算結果が表示されていない場合=演算子入力→削除したとき
+        if (this.lastResult !== '' && !this.resultDisplayed) {
+          const addedPart = beforeDelete.slice(this.lastResult.length); // 削除前の表示のうち、計算結果が保存されている部分を取り出す
+          const isSingleOperator = /^[+\-×÷]$/.test(addedPart); // 取り出した部分が演算子かどうか
+          const isBackToResult = this.display === this.lastResult; // 計算結果が表示されているかどうか
+    
+          if (isSingleOperator && isBackToResult) { // 演算子1つだけが追加された状態なら、計算結果に戻ったとみなして resultDisplayed を true に戻す
+            this.resultDisplayed = true; // 計算結果は消せなくなる
+          }
+        }
       }
       if (this.display.length === 0) {
         this.display = '0'; // 最後の1文字を消した後は0を表示
         this.displayIsEmpty = true;
-    }    
+      }    
          // 演算子の状態を更新
         this.prevIsOperator = this.isOperator(this.display.slice(-1));
     }
@@ -311,7 +322,7 @@ export class CalculatorComponent {
          this.displayIsEmpty = true;
          return;
       }
-      if (this.resultDisplayed) { // 計算結果が表示されている時は全削除（指数表記を消すためなので指数表記を許可するなら）
+      if (this.resultDisplayed) { // 計算結果が表示されている時は全削除
         this.display = '0';
         this.prevIsOperator = false;
         this.resultDisplayed = false;
